@@ -23,10 +23,9 @@ if !selfTest, let cmd = CommandLine.arguments.dropFirst().first, cmd.hasPrefix("
             let store = SessionStore()
             let terms = GhosttyMatcher.parse(Ghostty.listTerminals())
             for s in store.load() {
-                let id = GhosttyMatcher.pick(terms, title: store.title(sessionId: s.sessionId, cwd: s.cwd), cwd: s.cwd,
-                                             busy: GhosttyMatcher.busyHint(for: s.state))
-                let tab = terms.first { $0.id == id }
-                print("\(s.name) [\(s.state)] -> \(tab.map { "\($0.name)  (\($0.cwd))" } ?? "no tab found")")
+                let hit = Ghostty.tab(for: s, store: store, terms: terms)
+                let target = hit.map { "\($0.tab.name)  (\($0.tab.cwd))  [by \($0.by.rawValue)]" } ?? "no Ghostty tab found"
+                print("\(s.name) [\(s.state)] pid \(s.pid) tty \(ProcessTTY.of(s.pid) ?? "-") -> \(target)")
             }
         case "--version":
             print(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "dev")

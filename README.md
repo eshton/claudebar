@@ -15,8 +15,8 @@ without leaving what you are doing.
   | red triangle | stuck: busy but silent for longer than the threshold (10 min) |
   | blinking green check | just finished (15 s) |
   | thin bar beside the icon | context window usage: green < 60 %, orange < 85 %, red beyond |
-- **Click to focus** the session's [Ghostty](https://ghostty.org) tab. Matching uses the session title and folder,
-  and the tab glyph (✳ idle, spinner running) when several tabs look alike.
+- **Click to focus** the session's [Ghostty](https://ghostty.org) tab, matched exactly by terminal tty (two sessions in
+  the same folder with the same title are fine). Older Ghostty versions fall back to title, folder and tab glyph.
 - **Notifications** when a session needs you or gets stuck (optionally when it finishes). The stuck banner says why:
   *"tool still running 14m: Bash `npm test`"* or *"last tool finished 10m ago; model silent since"*.
 - **Approve / Deny permission prompts** from a banner button, the icon's menu or the bolt menu. If ClaudeBar is not
@@ -69,7 +69,7 @@ Open from any menu (⌘,). Stored in `~/.claude/clauderr/settings.json`.
 - **Sessions never show as "waiting".** Run `make install-hooks`, then restart your Claude sessions.
   `scripts/install-hooks.sh status` says `needsRepair` when a hook points at a path that no longer exists.
 - **Click goes to the wrong tab.** `ClaudeBar.app/Contents/MacOS/ClaudeBar --focus-plan` prints, read-only, which tab
-  each live session would focus.
+  each live session would focus and by which rule (tty, pid, title, folder).
 - **No banners.** Allow notifications for ClaudeBar in System Settings, Notifications.
 
 ## Command line

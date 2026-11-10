@@ -68,13 +68,17 @@ pruned and its banner withdrawn.
 
 ## Focusing the right terminal tab
 
-`GhosttyMatcher.pick` (see `Tests/ClaudeBarCoreTests/GhosttyMatcherTests.swift`):
+Ghostty's AppleScript interface reports each terminal's `tty` and foreground `pid`; a Claude session's process has a
+controlling tty (`ps -o tty= -p <pid>`). `GhosttyMatcher.pickMatch` (tests in `GhosttyMatcherTests.swift`):
 
-1. Tabs whose title (minus the status glyph) equals the session title (`customTitle`, else `aiTitle`, from the
-   transcript tail).
-2. Else tabs in the same working directory, Claude tabs before plain shells.
-3. If several tabs remain (two reviews of one repo can share folder and title) the tab glyph breaks the tie:
-   `✳` is idle, any other glyph is busy.
+1. **tty** match, else **pid** match. Exact: two sessions can share folder, title and glyph, never a tty.
+2. If the session has a tty and Ghostty reports ttys but none matches, the session is in another terminal: no tab is
+   chosen (no look-alike guess).
+3. Fallback for Ghostty versions without tty/pid: the session title (`customTitle`, else `aiTitle`, from the transcript
+   tail) against the tab title minus its status glyph, else tabs in the same folder (Claude tabs before plain shells).
+   If several tabs remain, the glyph breaks the tie: `✳` is idle, any other glyph is busy.
+
+`ClaudeBar --focus-plan` prints the choice and which rule made it (`by tty`, `by pid`, `by title`, `by folder`).
 
 ## Decisions worth knowing
 
@@ -101,6 +105,6 @@ The smoke test needs a logged-in GUI session (it creates real status items), so 
 
 ## Known limits
 
-- Tab focus is Ghostty only (`Ghostty` bridge); other terminals only get "open folder".
+- Tab focus is Ghostty only (`Ghostty` bridge); a session in another terminal can only "open folder".
 - The context window size is estimated: transcripts do not record it, so anything above 200k tokens implies 1M.
 - Banner buttons and the AppKit layer have no automated UI tests; `--selftest` snapshots cover what can be observed.

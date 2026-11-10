@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+- Clicking a session could still open the wrong Ghostty tab when two idle sessions had the same folder, title and
+  glyph. Tabs are now matched exactly by terminal tty (and foreground pid); title/folder/glyph matching is only a
+  fallback for Ghostty versions without tty support, and a session running outside Ghostty no longer lands on a
+  look-alike tab.
+
 ## 0.2.0
 
 ### Added
@@ -18,7 +26,7 @@
 
 ### Fixed
 - Clicking an icon went to the wrong Ghostty tab when two sessions shared a folder and a title: the tab glyph now
-  breaks the tie, and plain shell tabs no longer win the folder fallback.
+  breaks the tie, and plain shell tabs no longer win the folder fallback (superseded by tty matching, see Unreleased).
 - Clicking a stuck notification also opened Settings.
 - Hooks pointed at a path that no longer existed after the project folder moved; they now live in
   `~/.claude/clauderr/hooks/`.

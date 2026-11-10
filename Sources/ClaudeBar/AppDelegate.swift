@@ -446,10 +446,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func focus(_ s: Session) {
-        let title = store.title(sessionId: s.sessionId, cwd: s.cwd)
         let terms = GhosttyMatcher.parse(Ghostty.listTerminals())
-        if let id = GhosttyMatcher.pick(terms, title: title, cwd: s.cwd, busy: GhosttyMatcher.busyHint(for: s.state)) {
-            Ghostty.focus(id)
+        if let hit = Ghostty.tab(for: s, store: store, terms: terms) {
+            Ghostty.focus(hit.tab.id)
         } else {
             Ghostty.activate()   // not in a Ghostty tab we can find
         }
