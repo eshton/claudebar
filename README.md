@@ -1,46 +1,102 @@
 # ClaudeBar
 
-Menu bar monitor for Claude Code sessions, one icon per session.
+A macOS menu bar monitor for [Claude Code](https://claude.com/claude-code) sessions. See which sessions are
+running, waiting for you, stuck or finished, jump to the right terminal tab, and approve permission prompts
+without leaving what you are doing.
 
-- Icons: orange bubble = waiting on you, green spinner = running, grey pause = idle,
-  red triangle = stuck (busy but silent > 10 min), blinking green check = just finished (15s, adjustable in Settings).
-- Default is ONE icon for all sessions (worst state wins, badge = how many are in it). Left-click: focus the session
-  (one session) or list them all; each row opens that session's menu. Turn off in Settings for one icon per session
-  (left-click focuses that session's Ghostty tab, right-click opens its menu).
-- Rightmost item (yellow bolt): menu = tokens used today (millions, incl. cache reads) breakdown + per-session.
-  The count next to the bolt is optional (Settings), to save menu bar space.
-- A full menu bar on a notch Mac hides new icons silently. ClaudeBar notices ("icons are hidden" alert), and running
-  `open ClaudeBar.app` again always opens Settings. Only the newest launched copy keeps running.
-- Session tooltip/menu: tokens today, context % (window size estimated), last assistant message.
-- Right-click menu also has: last-tool diagnosis for stuck/running sessions ("tool still running 14m: Bash `npm test`"),
-  Approve/Deny for pending permission prompts, and "Mute alerts for this session" (icon fades).
-- macOS notifications for waiting / stuck (optionally finished). Permission requests get Approve / Deny buttons.
-- Settings… (⌘,): stuck threshold, hide idle sessions, notifications / sound / haptics, hook install status.
-- Haptics (MX Master 4) via the HapticWeb Logi plugin: `completed` on finish, `angry_alert` on stuck.
+## Features
+
+- **One icon for all sessions** (or one per session). The worst state wins and a badge counts sessions in it.
+  | Icon | Meaning |
+  |---|---|
+  | orange bubble | waiting on you |
+  | green spinner (rotating) | running |
+  | grey pause | idle |
+  | red triangle | stuck: busy but silent for longer than the threshold (10 min) |
+  | blinking green check | just finished (15 s) |
+  | thin bar beside the icon | context window usage: green < 60 %, orange < 85 %, red beyond |
+- **Click to focus** the session's [Ghostty](https://ghostty.org) tab. Matching uses the session title and folder,
+  and the tab glyph (✳ idle, spinner running) when several tabs look alike.
+- **Notifications** when a session needs you or gets stuck (optionally when it finishes). The stuck banner says why:
+  *"tool still running 14m: Bash `npm test`"* or *"last tool finished 10m ago; model silent since"*.
+- **Approve / Deny permission prompts** from a banner button, the icon's menu or the bolt menu. If ClaudeBar is not
+  running or nobody answers within 5 minutes, Claude falls back to its normal terminal prompt.
+- **Token usage today** (bolt icon): input / output / cache breakdown, per session, with context percentage.
+- **Mute a session** (right-click) and **hide idle sessions** for a quieter menu bar.
+- **Haptics** on an MX Master 4 through the [HapticWeb](https://github.com/Fallstop/HapticWebPlugin) Logi plugin
+  (optional): a buzz on finish, a stronger one on stuck.
+
+## Requirements
+
+macOS 13+, Swift 5.9+ toolchain (Xcode or Command Line Tools). Tab focus needs Ghostty 1.3+ (AppleScript support) and
+grants Automation permission on first use. Everything else works with any terminal.
 
 ## Install
-    ./build.sh && open ClaudeBar.app
-    ./install-login.sh          # start at login (./install-login.sh remove to undo)
-    ./install-hooks.sh          # register hooks in ~/.claude/settings.json (status | remove)
 
-Hooks (`hooks/mark.sh`, `hooks/permission.sh`) are copied to `~/.claude/clauderr/hooks/` and registered by
-`./install-hooks.sh` (or Settings… > Install / repair) for Notification / UserPromptSubmit / Stop / PostToolUse /
-PermissionRequest. They write `~/.claude/clauderr/<session>.waiting` so "waiting" is detected, and a request
-mailbox in `~/.claude/clauderr/permissions/`. If ClaudeBar isn't running or nobody answers within 5 min, the
-permission hook steps aside and Claude shows its normal terminal prompt. Restart running Claude sessions after installing.
-Original settings are backed up once to ~/.claude/settings.json.bak-clauderr.
-Preferences: `~/.claude/clauderr/settings.json`.
+```sh
+make app                  # release build -> ClaudeBar.app
+open ClaudeBar.app
+make install-hooks        # register the Claude Code hooks (needed for "waiting" and approvals)
+make install-login        # optional: start at login
+```
 
-Data source: `~/.claude/sessions/<pid>.json` + transcripts under `~/.claude/projects/`.
+Restart running Claude sessions after installing the hooks; they read hooks at startup.
+`scripts/install-hooks.sh status | remove` shows or removes them. The installer keeps your other hooks and saves your
+original `~/.claude/settings.json` once as `settings.json.bak-clauderr`.
 
-## Debugging tab focus
-    ClaudeBar.app/Contents/MacOS/ClaudeBar --focus-plan    # read-only: which Ghostty tab each live session would focus
-Tabs are matched by title, then folder. When several tabs match (e.g. two PR reviews in one repo), the tab glyph
-(✳ idle, spinner = running) is matched against the session's state.
+Launching a newer copy replaces an older running one. Running `open ClaudeBar.app` again always opens Settings.
 
-## Tests
-    swift test          # core logic (alert rules, icon choice, hooks installer, permission mailbox, ...)
-    Tests/smoke.sh      # launches the real binary against a fake home (CLAUDEBAR_HOME) and checks the menu bar items
+## Settings
 
-`CLAUDEBAR_HOME` redirects everything ClaudeBar reads/writes under `~/.claude` (Foundation ignores `$HOME`).
-`ClaudeBar --selftest` refuses to run without it.
+Open from any menu (⌘,). Stored in `~/.claude/clauderr/settings.json`.
+
+| Setting | Default | |
+|---|---|---|
+| One icon for all sessions | on | off: one icon per session |
+| Show token count next to the bolt | off | saves ~36 pt of menu bar |
+| Spin the icon while running | on | also off when macOS "Reduce motion" is on |
+| Stuck after N minutes | 10 | |
+| Blink the green check for N s | 15 | |
+| Hide idle sessions | off | they return when finishing or needing approval |
+| Notifications / also on finish | on / off | |
+| Sound / Haptics | on / on | |
+| Approve / deny from the menu bar | on | installs the `PermissionRequest` hook |
+
+## Troubleshooting
+
+- **No icon in the menu bar.** On Macs with a notch, a full menu bar silently hides new items. ClaudeBar detects this
+  and shows an alert after about 30 s; free some space (⌘-drag other icons off) or keep single-icon mode on.
+- **Sessions never show as "waiting".** Run `make install-hooks`, then restart your Claude sessions.
+  `scripts/install-hooks.sh status` says `needsRepair` when a hook points at a path that no longer exists.
+- **Click goes to the wrong tab.** `ClaudeBar.app/Contents/MacOS/ClaudeBar --focus-plan` prints, read-only, which tab
+  each live session would focus.
+- **No banners.** Allow notifications for ClaudeBar in System Settings, Notifications.
+
+## Command line
+
+```
+ClaudeBar --install-hooks | --uninstall-hooks | --hooks-status    manage Claude Code hooks (no UI)
+ClaudeBar --focus-plan                                           which Ghostty tab each session would focus
+ClaudeBar --version
+ClaudeBar --selftest        (needs CLAUDEBAR_HOME)               print the menu bar state as JSON; used by Tests/smoke.sh
+```
+
+`CLAUDEBAR_HOME` redirects everything ClaudeBar reads and writes under `~/.claude` (Foundation ignores `$HOME`).
+
+## Development
+
+```sh
+make help         # all targets
+make check        # lint + unit tests with coverage gate + hook tests + smoke test
+make test         # unit tests only
+make smoke        # launches the real binary against a fake home; briefly creates menu bar items
+```
+
+| Layer | Where | Tested by |
+|---|---|---|
+| Decisions: states, alerts, text, tab matching, hook installer, token counting | `Sources/ClaudeBarCore` | unit tests, 94 % line coverage (gate: 90 %) |
+| AppKit: status items, menus, notifications, settings window | `Sources/ClaudeBar` | `Tests/smoke.sh` against a fake home |
+| Hook scripts | `hooks/` | `Tests/hooks.sh` |
+
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for how the pieces fit and [CONTRIBUTING.md](CONTRIBUTING.md) before
+sending a change.
