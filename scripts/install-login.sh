@@ -2,7 +2,7 @@
 # Start ClaudeBar at login via a LaunchAgent. Undo: ./install-login.sh remove
 set -euo pipefail
 PLIST="$HOME/Library/LaunchAgents/local.clauderr.ClaudeBar.plist"
-APP="$(cd "$(dirname "$0")" && pwd)/ClaudeBar.app"
+APP="$(cd "$(dirname "$0")/.." && pwd)/ClaudeBar.app"
 if [ "${1:-}" = "remove" ]; then
   launchctl bootout "gui/$(id -u)" "$PLIST" 2>/dev/null || true
   rm -f "$PLIST"; echo "removed"; exit 0

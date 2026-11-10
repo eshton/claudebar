@@ -1,6 +1,7 @@
 #!/bin/bash
 set -euo pipefail
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/.."
+VERSION=$(tr -d '[:space:]' < VERSION)
 swift build -c release
 APP=ClaudeBar.app
 rm -rf "$APP"; mkdir -p "$APP/Contents/MacOS"
@@ -16,10 +17,11 @@ cat > "$APP/Contents/Info.plist" <<PL
 <key>CFBundleIdentifier</key><string>local.clauderr.ClaudeBar</string>
 <key>CFBundleExecutable</key><string>ClaudeBar</string>
 <key>CFBundlePackageType</key><string>APPL</string>
-<key>CFBundleVersion</key><string>1</string>
+<key>CFBundleVersion</key><string>$VERSION</string>
+<key>CFBundleShortVersionString</key><string>$VERSION</string>
 <key>LSUIElement</key><true/>
 <key>NSAppleEventsUsageDescription</key><string>ClaudeBar focuses the Ghostty tab of a Claude session.</string>
 </dict></plist>
 PL
 codesign --force --sign - "$APP"
-echo "Built $APP"
+echo "Built $APP $VERSION"

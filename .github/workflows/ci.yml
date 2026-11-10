@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lint
+        run: swiftlint lint --quiet --strict
+      - name: Build
+        run: swift build
+      - name: Unit tests + coverage gate
+        run: scripts/coverage.sh
+      - name: Hook script tests
+        run: Tests/hooks.sh
+      - name: Release app bundle
+        run: scripts/build.sh
+      - name: Installer dry run (isolated home)
+        run: |
+          export CLAUDEBAR_HOME="$(mktemp -d)"
+          ClaudeBar.app/Contents/MacOS/ClaudeBar --install-hooks
+          test "$(ClaudeBar.app/Contents/MacOS/ClaudeBar --hooks-status)" = "installed"
+          ClaudeBar.app/Contents/MacOS/ClaudeBar --uninstall-hooks
+          test "$(ClaudeBar.app/Contents/MacOS/ClaudeBar --hooks-status)" = "notInstalled"
+    # Tests/smoke.sh needs a logged-in GUI session (it creates real status items), so it is a local check: `make smoke`.

@@ -28,10 +28,12 @@ if !selfTest, let cmd = CommandLine.arguments.dropFirst().first, cmd.hasPrefix("
                 let tab = terms.first { $0.id == id }
                 print("\(s.name) [\(s.state)] -> \(tab.map { "\($0.name)  (\($0.cwd))" } ?? "no tab found")")
             }
+        case "--version":
+            print(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "dev")
         case "--hooks-status":
             print(installer.status())
         default:
-            print("usage: ClaudeBar [--install-hooks | --uninstall-hooks | --hooks-status | --focus-plan]")
+            print("usage: ClaudeBar [--install-hooks | --uninstall-hooks | --hooks-status | --focus-plan | --version]")
             exit(2)
         }
         exit(0)

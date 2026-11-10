@@ -1,24 +1,6 @@
 import XCTest
 @testable import ClaudeBarCore
 
-func makeSession(pid: Int32 = 1, id: String = "s1", name: String = "alpha", cwd: String = "/p",
-                 state: SessionState = .running, silentFor: TimeInterval = 0) -> Session {
-    Session(pid: pid, sessionId: id, name: name, cwd: cwd, state: state, silentFor: silentFor)
-}
-
-func makeUsage(today: Int = 12_300_000, context: Int = 340_000, last: String? = nil) -> SessionUsage {
-    var u = SessionUsage()
-    u.today.input = today
-    u.contextTokens = context
-    u.maxContext = context
-    u.lastText = last
-    return u
-}
-
-func makeRequest(id: String = "r1", session: String = "s1", tool: String = "Bash", summary: String = "rm -rf x") -> PermissionRequest {
-    PermissionRequest(id: id, hookPid: 1, sessionId: session, toolName: tool, summary: summary, createdAt: Date())
-}
-
 final class SessionTextTests: XCTestCase {
     func testLabelAndSnippet() {
         XCTAssertEqual([SessionState.idle, .running, .waiting, .stuck].map(SessionText.label), ["idle", "running", "waiting", "stuck"])
