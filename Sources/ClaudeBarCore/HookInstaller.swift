@@ -68,7 +68,8 @@ public struct HookInstaller {
         let ours = Self.ourEntries(in: root)
         if ours.isEmpty { return .notInstalled }
         let scriptsOK = desired.allSatisfy { FileManager.default.isExecutableFile(atPath: String($0.command.split(separator: " ")[0])) }
-        return Set(ours.map { "\($0.event)|\($0.command)|\($0.timeout ?? 0)" }) == Set(desired.map { "\($0.event)|\($0.command)|\($0.timeout ?? 0)" }) && scriptsOK
+        func key(_ e: Entry) -> String { "\(e.event)|\(e.command)|\(e.timeout ?? 0)" }
+        return Set(ours.map(key)) == Set(desired.map(key)) && scriptsOK
             ? .installed : .needsRepair
     }
 
@@ -122,8 +123,11 @@ public struct HookInstaller {
                 throw InstallError.unreadableSettings("top level is not an object")
             }
             return obj
-        } catch let e as InstallError { throw e }
-        catch { throw InstallError.unreadableSettings(error.localizedDescription) }
+        } catch let e as InstallError {
+            throw e
+        } catch {
+            throw InstallError.unreadableSettings(error.localizedDescription)
+        }
     }
 
     func write(_ root: [String: Any]) throws {

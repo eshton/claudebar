@@ -47,8 +47,12 @@ final class SettingsModel: ObservableObject {
     }
 
     func removeHooks() {
-        do { try Self.installer(settings).uninstall(); hookMessage = "Hooks removed." }
-        catch { hookMessage = "\(error)" }
+        do {
+            try Self.installer(settings).uninstall()
+            hookMessage = "Hooks removed."
+        } catch {
+            hookMessage = "\(error)"
+        }
         refreshHookStatus()
     }
 }

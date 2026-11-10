@@ -50,7 +50,9 @@ public final class TokenCounter {
     private let projectsDir: URL
     private let lock = NSLock()
     private var offsets: [String: UInt64] = [:]
-    private var counted: [String: (session: String, usage: TokenBreakdown, today: Bool)] = [:]
+    /// Last usage seen per streamed message, so growing re-writes of the same message only count their delta.
+    private struct CountedMessage { let session: String; let usage: TokenBreakdown; let today: Bool }
+    private var counted: [String: CountedMessage] = [:]
     private var snap = UsageSnapshot()
     private var dayStart = Date.distantPast
     private let iso: ISO8601DateFormatter = {
@@ -135,7 +137,7 @@ public final class TokenCounter {
                 let d = b - prev
                 snap.total.add(d); u.today.add(d)
             }
-            counted[key] = (session, b, isToday)
+            counted[key] = CountedMessage(session: session, usage: b, today: isToday)
 
             if isMain && !sidechain {
                 u.contextTokens = b.input + b.cacheRead + b.cacheWrite

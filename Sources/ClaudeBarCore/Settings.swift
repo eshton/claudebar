@@ -38,7 +38,8 @@ public struct Settings: Codable, Equatable {
     public init() {}
 
     private enum CodingKeys: String, CodingKey {
-        case singleIcon, animateRunning, showTokenText, stuckMinutes, finishBlinkSeconds, notifications, notifyOnFinish, sound, haptics, hideIdle, permissionPrompts, mutedSessions
+        case singleIcon, animateRunning, showTokenText, stuckMinutes, finishBlinkSeconds
+        case notifications, notifyOnFinish, sound, haptics, hideIdle, permissionPrompts, mutedSessions
     }
 
     public init(from decoder: Decoder) throws {

@@ -66,10 +66,8 @@ public struct SessionStore {
             let d = projectsDir.appendingPathComponent(slug)
             if fm.fileExists(atPath: d.appendingPathComponent("\(raw.sessionId).jsonl").path) { return d }
         }
-        for d in (try? fm.contentsOfDirectory(at: projectsDir, includingPropertiesForKeys: nil)) ?? [] {
-            if fm.fileExists(atPath: d.appendingPathComponent("\(raw.sessionId).jsonl").path) { return d }
-        }
-        return nil
+        let dirs = (try? fm.contentsOfDirectory(at: projectsDir, includingPropertiesForKeys: nil)) ?? []
+        return dirs.first { fm.fileExists(atPath: $0.appendingPathComponent("\(raw.sessionId).jsonl").path) }
     }
 
     /// Current conversation title (user /rename wins over auto title), read from the transcript tail.

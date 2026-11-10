@@ -75,7 +75,10 @@ final class TokenTests: XCTestCase {
         let old = ISO8601DateFormatter().string(from: now.addingTimeInterval(-3 * 86400))
         func line(_ id: String, out: Int, ts: String, text: String? = nil, side: Bool = false) -> String {
             let content = text.map { #","content":[{"type":"text","text":"\#($0)"}]"# } ?? ""
-            return #"{"type":"assistant","timestamp":"\#(ts)","requestId":"r\#(id)","isSidechain":\#(side),"message":{"id":"m\#(id)","model":"x","usage":{"input_tokens":10,"output_tokens":\#(out),"cache_creation_input_tokens":100,"cache_read_input_tokens":1000}\#(content)}}"#
+            let usage = #""usage":{"input_tokens":10,"output_tokens":\#(out),"#
+                + #""cache_creation_input_tokens":100,"cache_read_input_tokens":1000}"#
+            let head = #"{"type":"assistant","timestamp":"\#(ts)","requestId":"r\#(id)","isSidechain":\#(side),"#
+            return head + #""message":{"id":"m\#(id)","model":"x",\#(usage)\#(content)}}"#
         }
         let main = [line("1", out: 5, ts: ts), line("1", out: 50, ts: ts),   // streamed duplicate, final = 50
                     line("2", out: 7, ts: ts, text: "hello"), line("0", out: 999, ts: old)].joined(separator: "\n") + "\n"
@@ -144,4 +147,3 @@ final class GhosttyTieBreakTests: XCTestCase {
         XCTAssertEqual(GhosttyMatcher.pick(t, title: nil, cwd: "/p"), "sh")
     }
 }
-

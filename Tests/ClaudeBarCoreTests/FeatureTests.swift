@@ -97,7 +97,8 @@ final class IconModelTests: XCTestCase {
 
 final class ToolActivityTests: XCTestCase {
     private func use(_ id: String, _ tool: String, _ input: String, _ ts: String) -> String {
-        #"{"type":"assistant","timestamp":"\#(ts)","message":{"content":[{"type":"tool_use","id":"\#(id)","name":"\#(tool)","input":\#(input)}]}}"#
+        let block = #"{"type":"tool_use","id":"\#(id)","name":"\#(tool)","input":\#(input)}"#
+        return #"{"type":"assistant","timestamp":"\#(ts)","message":{"content":[\#(block)]}}"#
     }
     private func result(_ id: String, _ ts: String) -> String {
         #"{"type":"user","timestamp":"\#(ts)","message":{"content":[{"type":"tool_result","tool_use_id":"\#(id)","content":"ok"}]}}"#
@@ -218,11 +219,14 @@ final class HookInstallerTests: XCTestCase {
         let home = try tempHome()
         let src = home.appendingPathComponent("src")
         try FileManager.default.createDirectory(at: src, withIntermediateDirectories: true)
-        for n in ["mark.sh", "permission.sh"] { try "#!/bin/bash\n".write(to: src.appendingPathComponent(n), atomically: true, encoding: .utf8) }
+        for n in ["mark.sh", "permission.sh"] {
+            try "#!/bin/bash\n".write(to: src.appendingPathComponent(n), atomically: true, encoding: .utf8)
+        }
         return (HookInstaller(home: home, sourceDir: src, permissionHook: permission), home)
     }
     private func json(_ home: URL) throws -> [String: Any] {
-        try JSONSerialization.jsonObject(with: Data(contentsOf: home.appendingPathComponent(".claude/settings.json"))) as! [String: Any]
+        let data = try Data(contentsOf: home.appendingPathComponent(".claude/settings.json"))
+        return try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
     }
     private func commands(_ root: [String: Any], _ event: String) -> [String] {
         ((root["hooks"] as? [String: Any])?[event] as? [[String: Any]] ?? [])

@@ -1,0 +1,29 @@
+included:
+  - Sources
+  - Tests
+
+line_length:
+  warning: 140
+  error: 200
+  ignores_comments: true
+  ignores_urls: true
+
+# Short names (s = session, it = status item, m = menu, d = decoded dict) are idiomatic in this codebase.
+identifier_name:
+  min_length: 1
+  max_length: 50
+
+type_body_length:
+  warning: 400
+  error: 700
+
+function_body_length:
+  warning: 60
+  error: 120
+
+file_length:
+  warning: 500
+  error: 800
+
+disabled_rules:
+  - trailing_comma     # multi-line literals are written either way
