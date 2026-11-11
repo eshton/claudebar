@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- **Homebrew**: `brew install --cask eshton/tap/claudebar` installs a prebuilt universal (Apple silicon + Intel)
+  ClaudeBar.app. `make dist` builds the release zip and its sha256.
+
 ## 0.3.0 - 2026-11-11
 
 ### Added

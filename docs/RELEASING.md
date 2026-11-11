@@ -1,6 +1,7 @@
 # Releasing
 
-ClaudeBar is built from source; a release is a version bump, a dated changelog section and a git tag.
+A release is a version bump, a dated changelog section, a git tag, a GitHub release with a prebuilt zip, and a bump
+of the Homebrew cask in [eshton/homebrew-tap](https://github.com/eshton/homebrew-tap).
 
 ## Checklist
 
@@ -14,9 +15,13 @@ ClaudeBar is built from source; a release is a version bump, a dated changelog s
    `VERSION`, turns `## Unreleased` into `## X.Y.Z - <date>`, commits `Release X.Y.Z` and creates the annotated tag
    `vX.Y.Z` with that section as its message.
 5. `make app`, quit ClaudeBar, `open ClaudeBar.app`, and check the menu footer says `ClaudeBar X.Y.Z`.
-6. Once a remote exists: `git push --follow-tags`.
+6. `git push --follow-tags`.
+7. `make dist` builds a universal app and writes `dist/ClaudeBar-X.Y.Z.zip` plus its sha256.
+8. `gh release create vX.Y.Z dist/ClaudeBar-X.Y.Z.zip --notes-from-tag`
+9. In `eshton/homebrew-tap`, set `version` and `sha256` in `Casks/claudebar.rb`, commit, push. Check with
+   `brew update && brew upgrade --cask claudebar`.
 
-Nothing is pushed or published by the script.
+`make release` never pushes or publishes; steps 6-9 do.
 
 ## Undoing a release that was not pushed
 

@@ -35,6 +35,21 @@ grants Automation permission on first use. Everything else works with any termin
 
 ## Install
 
+### Homebrew
+
+```sh
+brew install --cask eshton/tap/claudebar
+open -a ClaudeBar
+```
+
+Then choose **Install hooks** in ClaudeBar's Settings (or run
+`/Applications/ClaudeBar.app/Contents/MacOS/ClaudeBar --install-hooks`) and restart running Claude sessions.
+To start at login, add ClaudeBar in System Settings > General > Login Items. Update with `brew upgrade --cask claudebar`.
+
+The app is ad-hoc signed, not notarized; the cask clears the quarantine flag so macOS opens it without a warning.
+
+### From source
+
 ```sh
 make app                  # release build -> ClaudeBar.app
 open ClaudeBar.app
@@ -52,6 +67,11 @@ The installed version is shown at the bottom of every menu (`ClaudeBar 0.3.0`) a
 To update: `git pull && make app`, then quit ClaudeBar and `open ClaudeBar.app`.
 
 ## Uninstall
+
+Homebrew: run `/Applications/ClaudeBar.app/Contents/MacOS/ClaudeBar --uninstall-hooks` first, then
+`brew uninstall --cask claudebar` (`--zap` also deletes settings).
+
+From source:
 
 ```sh
 make uninstall                 # quit, unregister hooks (others kept), remove login item and installed scripts

@@ -4,3 +4,4 @@ ClaudeBar.app/
 *.xcodeproj
 .swiftpm/
 coverage/
+dist/

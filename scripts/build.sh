@@ -2,10 +2,17 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 VERSION=$(tr -d '[:space:]' < VERSION)
-swift build -c release
+# UNIVERSAL=1 builds arm64 + x86_64 (what releases ship); default is the host architecture only.
+if [ "${UNIVERSAL:-0}" = 1 ]; then
+  swift build -c release --arch arm64 --arch x86_64
+  BIN=.build/apple/Products/Release/ClaudeBar
+else
+  swift build -c release
+  BIN=.build/release/ClaudeBar
+fi
 APP=ClaudeBar.app
 rm -rf "$APP"; mkdir -p "$APP/Contents/MacOS"
-cp .build/release/ClaudeBar "$APP/Contents/MacOS/ClaudeBar"
+cp "$BIN" "$APP/Contents/MacOS/ClaudeBar"
 # Hook scripts ride along so the app (and install-hooks.sh) can install them from the bundle.
 mkdir -p "$APP/Contents/Resources/hooks"
 cp hooks/mark.sh hooks/permission.sh "$APP/Contents/Resources/hooks/"

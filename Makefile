@@ -1,4 +1,4 @@
-.PHONY: help setup build test scripts-test hooks-test smoke lint coverage check app run install-hooks install-login uninstall release clean
+.PHONY: help setup build test scripts-test hooks-test smoke lint coverage check app run install-hooks install-login uninstall release dist clean
 
 help:  ## list targets
 	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  make %-14s %s\n", $$1, $$2}'
@@ -52,6 +52,9 @@ release:  ## cut a release: make release VERSION=X.Y.Z (runs check, bumps, dates
 	@test -n "$(VERSION)" || { echo "usage: make release VERSION=X.Y.Z"; exit 2; }
 	scripts/release.sh $(VERSION)
 
+dist:  ## universal ClaudeBar.app zipped into dist/ with its sha256, for a GitHub release + the Homebrew cask
+	scripts/dist.sh
+
 clean:
 	swift package clean
-	rm -rf ClaudeBar.app coverage
+	rm -rf ClaudeBar.app coverage dist
