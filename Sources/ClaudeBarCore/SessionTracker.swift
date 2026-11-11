@@ -4,6 +4,8 @@ import Foundation
 public struct SessionTracker {
     public private(set) var lastState: [Int32: SessionState] = [:]
     public private(set) var finishedUntil: [Int32: Date] = [:]
+    /// Steady (non-blinking) check after the user acknowledged a finished session.
+    public private(set) var lingerUntil: [Int32: Date] = [:]
 
     public init() {}
 
@@ -14,6 +16,7 @@ public struct SessionTracker {
         for pid in lastState.keys where !live.contains(pid) {
             lastState[pid] = nil
             finishedUntil[pid] = nil
+            lingerUntil[pid] = nil
         }
         var alerts: [(session: Session, alert: Alert)] = []
         for s in list.sorted(by: { $0.pid < $1.pid }) where lastState[s.pid] != s.state {
@@ -24,6 +27,7 @@ public struct SessionTracker {
                 finishedUntil[s.pid] = now.addingTimeInterval(TimeInterval(blinkSeconds))
             } else if s.state != .idle {
                 finishedUntil[s.pid] = nil
+                lingerUntil[s.pid] = nil       // working again: the check no longer applies
             }
             lastState[s.pid] = s.state
         }
@@ -39,11 +43,26 @@ public struct SessionTracker {
         pids.compactMap { finishedUntil[$0] }.max()
     }
 
-    /// The user looked at it: stop blinking.
-    public mutating func acknowledge(_ pid: Int32) { finishedUntil[pid] = nil }
+    public func isLingering(_ pid: Int32, now: Date) -> Bool {
+        (lingerUntil[pid] ?? .distantPast) > now
+    }
+
+    public func latestLinger(of pids: [Int32]) -> Date? {
+        pids.compactMap { lingerUntil[$0] }.max()
+    }
+
+    /// The user looked at it: stop blinking. A session that was blinking keeps a steady check for `lingerSeconds`
+    /// so the finished job doesn't vanish the moment it is clicked.
+    public mutating func acknowledge(_ pid: Int32, now: Date = Date(), lingerSeconds: Int = 0) {
+        if isFinishing(pid, now: now), lingerSeconds > 0 {
+            lingerUntil[pid] = now.addingTimeInterval(TimeInterval(lingerSeconds))
+        }
+        finishedUntil[pid] = nil
+    }
 
     public mutating func expire(now: Date) {
         finishedUntil = finishedUntil.filter { $0.value > now }
+        lingerUntil = lingerUntil.filter { $0.value > now }
     }
 
     public var hasFinishing: Bool { !finishedUntil.isEmpty }
@@ -51,8 +70,9 @@ public struct SessionTracker {
     /// Sessions that currently get an icon ("hide idle" applied).
     public func visible(_ list: [Session], hideIdle: Bool, pendingSessionIds: Set<String>, now: Date) -> [Session] {
         list.filter {
-            IconModel.isVisible(state: $0.state, hideIdle: hideIdle, finishing: isFinishing($0.pid, now: now),
-                                hasPendingPermission: pendingSessionIds.contains($0.sessionId))
+            let keepShowing = isFinishing($0.pid, now: now) || isLingering($0.pid, now: now)
+            return IconModel.isVisible(state: $0.state, hideIdle: hideIdle, finishing: keepShowing,
+                                       hasPendingPermission: pendingSessionIds.contains($0.sessionId))
         }
     }
 }

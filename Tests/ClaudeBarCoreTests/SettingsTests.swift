@@ -33,4 +33,26 @@ final class SettingsTests: XCTestCase {
         s.pruneMutes(keeping: ["x"])
         XCTAssertTrue(s.mutedSessions.isEmpty)
     }
+
+    func testFinishLingerAndSoundDefaults() throws {
+        let s = try JSONDecoder().decode(Settings.self, from: Data("{}".utf8))
+        XCTAssertEqual(s.finishLingerSeconds, 120)
+        XCTAssertEqual(s.finishSound, "Glass")
+        XCTAssertEqual(s.finishSoundName, "Glass")
+    }
+
+    func testFinishLingerIsClampedButMayBeZero() throws {
+        XCTAssertEqual(try JSONDecoder().decode(Settings.self, from: Data(#"{"finishLingerSeconds":0}"#.utf8)).finishLingerSeconds, 0)
+        XCTAssertEqual(try JSONDecoder().decode(Settings.self, from: Data(#"{"finishLingerSeconds":-5}"#.utf8)).finishLingerSeconds, 0)
+        let huge = try JSONDecoder().decode(Settings.self, from: Data(#"{"finishLingerSeconds":99999}"#.utf8))
+        XCTAssertEqual(huge.finishLingerSeconds, 3600)
+    }
+
+    func testFinishSoundOffValues() {
+        var s = Settings()
+        s.finishSound = "None"
+        XCTAssertNil(s.finishSoundName)
+        s.finishSound = ""
+        XCTAssertNil(s.finishSoundName)
+    }
 }

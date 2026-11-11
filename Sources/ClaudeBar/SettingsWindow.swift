@@ -84,6 +84,11 @@ struct SettingsView: View {
                 Stepper(value: $model.settings.finishBlinkSeconds, in: 1...600, step: 5) {
                     Text("Blink the green check for \(model.settings.finishBlinkSeconds) s after a session finishes")
                 }
+                Stepper(value: $model.settings.finishLingerSeconds, in: 0...3600, step: 30) {
+                    Text(model.settings.finishLingerSeconds == 0
+                         ? "Drop the green check as soon as it is clicked"
+                         : "Keep the green check \(model.settings.finishLingerSeconds) s after it is clicked")
+                }
                 Toggle("Hide idle sessions", isOn: $model.settings.hideIdle)
             }
             Section("Alerts") {
@@ -91,6 +96,13 @@ struct SettingsView: View {
                 Toggle("Also notify when a session finishes", isOn: $model.settings.notifyOnFinish)
                     .disabled(!model.settings.notifications)
                 Toggle("Sound", isOn: $model.settings.sound)
+                Picker("When a job finishes", selection: $model.settings.finishSound) {
+                    ForEach(Sounds.finishChoices, id: \.self) { Text($0) }
+                }
+                .disabled(!model.settings.sound)
+                .onChange(of: model.settings.finishSound) { name in
+                    if name != "None" { Sounds.play(name, volume: AlertPolicy.finishVolume) }   // preview
+                }
                 Toggle("Haptics (MX Master)", isOn: $model.settings.haptics)
                 Text("Mute a single session from its right-click menu.").font(.caption).foregroundStyle(.secondary)
             }
@@ -107,7 +119,7 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 440, height: 580)
+        .frame(width: 440, height: 660)
     }
 }
 

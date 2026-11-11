@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Added
+- **Soft bell when a job finishes** (system sound `Glass` at half volume; choose None / Glass / Tink / Pop / Purr in
+  Settings). Errors and "needs you" keep the louder `Ping`, which also wins when both happen at once.
+- **A clicked finished session stays for 2 minutes**: the blink stops and a steady green check remains (also when
+  "hide idle sessions" is on). Adjustable, 0 = drop at once.
+
 ### Fixed
 - Clicking a session could still open the wrong Ghostty tab when two idle sessions had the same folder, title and
   glyph. Tabs are now matched exactly by terminal tty (and foreground pid); title/folder/glyph matching is only a

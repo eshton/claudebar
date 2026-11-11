@@ -82,6 +82,73 @@ final class SessionTrackerTests: XCTestCase {
     }
 }
 
+final class LingerTests: XCTestCase {
+    private let now = Date(timeIntervalSinceReferenceDate: 1000)
+
+    /// A session that just finished and is blinking.
+    private func finished() -> SessionTracker {
+        var t = SessionTracker()
+        _ = t.update([makeSession(state: .running)], now: now, blinkSeconds: 15, isMuted: { _ in false })
+        _ = t.update([makeSession(state: .idle)], now: now, blinkSeconds: 15, isMuted: { _ in false })
+        return t
+    }
+
+    func testClickingAFinishedSessionStopsTheBlinkButKeepsItForTwoMinutes() {
+        var t = finished()
+        let click = now.addingTimeInterval(5)
+        t.acknowledge(1, now: click, lingerSeconds: 120)
+        XCTAssertFalse(t.isFinishing(1, now: click))                                  // blinking stopped
+        XCTAssertTrue(t.isLingering(1, now: click.addingTimeInterval(119)))
+        XCTAssertFalse(t.isLingering(1, now: click.addingTimeInterval(121)))
+    }
+
+    func testHiddenIdleSessionStaysVisibleWhileLingering() {
+        var t = finished()
+        let list = [makeSession(state: .idle)]
+        t.acknowledge(1, now: now, lingerSeconds: 120)
+        XCTAssertEqual(t.visible(list, hideIdle: true, pendingSessionIds: [], now: now.addingTimeInterval(100)).count, 1)
+        XCTAssertEqual(t.visible(list, hideIdle: true, pendingSessionIds: [], now: now.addingTimeInterval(121)).count, 0)
+    }
+
+    func testClickWithoutAFinishDoesNotLinger() {
+        var t = SessionTracker()
+        _ = t.update([makeSession(state: .idle)], now: now, blinkSeconds: 15, isMuted: { _ in false })
+        t.acknowledge(1, now: now, lingerSeconds: 120)
+        XCTAssertFalse(t.isLingering(1, now: now))
+    }
+
+    func testClickAfterTheBlinkEndedDoesNotLinger() {
+        var t = finished()
+        t.acknowledge(1, now: now.addingTimeInterval(60), lingerSeconds: 120)        // blink (15s) is long over
+        XCTAssertFalse(t.isLingering(1, now: now.addingTimeInterval(60)))
+    }
+
+    func testZeroSecondsMeansGoneAtOnce() {
+        var t = finished()
+        t.acknowledge(1, now: now, lingerSeconds: 0)
+        XCTAssertFalse(t.isLingering(1, now: now))
+        XCTAssertFalse(t.isFinishing(1, now: now))
+    }
+
+    func testResumingWorkEndsTheLinger() {
+        var t = finished()
+        t.acknowledge(1, now: now, lingerSeconds: 120)
+        _ = t.update([makeSession(state: .running)], now: now.addingTimeInterval(10), blinkSeconds: 15, isMuted: { _ in false })
+        XCTAssertFalse(t.isLingering(1, now: now.addingTimeInterval(10)))
+    }
+
+    func testDeadSessionsAndExpiryClearIt() {
+        var t = finished()
+        t.acknowledge(1, now: now, lingerSeconds: 120)
+        XCTAssertEqual(t.latestLinger(of: [1]), now.addingTimeInterval(120))
+        t.expire(now: now.addingTimeInterval(121))
+        XCTAssertNil(t.latestLinger(of: [1]))
+        t.acknowledge(1, now: now, lingerSeconds: 120)
+        _ = t.update([], now: now, blinkSeconds: 15, isMuted: { _ in false })       // session ended
+        XCTAssertNil(t.lingerUntil[1])
+    }
+}
+
 final class PermissionAnnouncementsTests: XCTestCase {
     func testAnnouncesOnceAndReportsGone() {
         var a = PermissionAnnouncements()

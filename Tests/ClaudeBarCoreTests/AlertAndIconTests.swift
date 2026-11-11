@@ -21,12 +21,26 @@ final class AlertTests: XCTestCase {
     func testDeliveryFollowsSettings() {
         var s = Settings()
         XCTAssertEqual(AlertPolicy.delivery(for: .stuck, settings: s),
-                       AlertDelivery(sound: true, haptic: "angry_alert", banner: true))
-        XCTAssertEqual(AlertPolicy.delivery(for: .finished, settings: s),
-                       AlertDelivery(sound: false, haptic: "completed", banner: false))   // notifyOnFinish off
+                       AlertDelivery(sound: "Ping", haptic: "angry_alert", banner: true))
+        XCTAssertEqual(AlertPolicy.delivery(for: .needsInput, settings: s),
+                       AlertDelivery(sound: "Ping", haptic: nil, banner: true))
         s.notifyOnFinish = true; s.haptics = false; s.sound = false; s.notifications = false
-        XCTAssertEqual(AlertPolicy.delivery(for: .finished, settings: s), AlertDelivery(sound: false, haptic: nil, banner: false))
-        XCTAssertEqual(AlertPolicy.delivery(for: .needsInput, settings: s), AlertDelivery(sound: false, haptic: nil, banner: false))
+        XCTAssertEqual(AlertPolicy.delivery(for: .finished, settings: s).sound, nil)       // master sound switch
+        XCTAssertEqual(AlertPolicy.delivery(for: .needsInput, settings: s), AlertDelivery())
+    }
+
+    func testFinishGetsASoftBell() {
+        var s = Settings()
+        let d = AlertPolicy.delivery(for: .finished, settings: s)
+        XCTAssertEqual(d, AlertDelivery(sound: "Glass", volume: 0.5, haptic: "completed", banner: false))
+        XCTAssertLessThan(d.volume, AlertPolicy.delivery(for: .stuck, settings: s).volume)   // quieter than the error sound
+        s.finishSound = "Tink"
+        XCTAssertEqual(AlertPolicy.delivery(for: .finished, settings: s).sound, "Tink")
+        s.finishSound = "None"
+        XCTAssertNil(AlertPolicy.delivery(for: .finished, settings: s).sound)
+        XCTAssertEqual(AlertPolicy.delivery(for: .stuck, settings: s).sound, "Ping")         // errors stay audible
+        s.finishSound = ""
+        XCTAssertNil(AlertPolicy.delivery(for: .finished, settings: s).sound)
     }
 }
 
@@ -142,5 +156,31 @@ final class SpinTests: XCTestCase {
 
     func testAnimateRunningDefault() throws {
         XCTAssertTrue(try JSONDecoder().decode(Settings.self, from: Data("{}".utf8)).animateRunning)
+    }
+}
+
+final class LingerIconTests: XCTestCase {
+    func testSteadyCheckAfterTheBlinkEnds() {
+        let now = Date()
+        let linger = now.addingTimeInterval(60)
+        XCTAssertEqual(IconModel.kind(state: .idle, finishedUntil: nil, lingerUntil: linger, tick: 0, now: now), .finishedFilled)
+        // odd tick: a blinking icon would be the outline here
+        XCTAssertEqual(IconModel.kind(state: .idle, finishedUntil: nil, lingerUntil: linger, tick: 1, now: now), .finishedFilled)
+        let expired = now.addingTimeInterval(-1)
+        XCTAssertEqual(IconModel.kind(state: .idle, finishedUntil: nil, lingerUntil: expired, tick: 0, now: now), .idle)
+    }
+
+    func testBlinkBeatsLingerAndOnlyIdleSessionsShowTheCheck() {
+        let now = Date()
+        XCTAssertEqual(IconModel.kind(state: .idle, finishedUntil: now.addingTimeInterval(5), lingerUntil: now.addingTimeInterval(60),
+                                      tick: 1, now: now), .finishedOutline)
+        XCTAssertEqual(IconModel.kind(state: .running, finishedUntil: nil, lingerUntil: now.addingTimeInterval(60), tick: 0, now: now),
+                       .running)
+    }
+
+    func testSingleIconSummaryShowsTheLingeringCheck() {
+        let now = Date()
+        let s = IconModel.summary(states: [.idle, .idle], finishedUntil: nil, lingerUntil: now.addingTimeInterval(60), tick: 0, now: now)
+        XCTAssertEqual(s, IconSummary(kind: .finishedFilled, badge: nil))
     }
 }

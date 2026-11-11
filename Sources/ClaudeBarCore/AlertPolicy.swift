@@ -6,9 +6,15 @@ public enum Alert: Equatable {
 
 /// What an alert should do, given the user's settings. Pure so it can be tested.
 public struct AlertDelivery: Equatable {
-    public var sound: Bool
+    /// macOS system sound to play, nil = silent.
+    public var sound: String?
+    public var volume: Float
     public var haptic: String?
     public var banner: Bool
+
+    public init(sound: String? = nil, volume: Float = 1, haptic: String? = nil, banner: Bool = false) {
+        self.sound = sound; self.volume = volume; self.haptic = haptic; self.banner = banner
+    }
 }
 
 public enum AlertPolicy {
@@ -25,15 +31,21 @@ public enum AlertPolicy {
         }
     }
 
+    /// Errors and "needs you" use the attention sound; a finished job gets a soft bell at half volume.
+    public static let attentionSound = "Ping"
+    public static let finishVolume: Float = 0.5
+
     public static func delivery(for alert: Alert, settings: Settings) -> AlertDelivery {
+        let attention = settings.sound ? attentionSound : nil
         switch alert {
         case .needsInput:
-            return AlertDelivery(sound: settings.sound, haptic: nil, banner: settings.notifications)
+            return AlertDelivery(sound: attention, haptic: nil, banner: settings.notifications)
         case .stuck:
-            return AlertDelivery(sound: settings.sound, haptic: settings.haptics ? "angry_alert" : nil,
+            return AlertDelivery(sound: attention, haptic: settings.haptics ? "angry_alert" : nil,
                                  banner: settings.notifications)
         case .finished:
-            return AlertDelivery(sound: false, haptic: settings.haptics ? "completed" : nil,
+            return AlertDelivery(sound: settings.sound ? settings.finishSoundName : nil, volume: finishVolume,
+                                 haptic: settings.haptics ? "completed" : nil,
                                  banner: settings.notifications && settings.notifyOnFinish)
         }
     }
@@ -54,10 +66,13 @@ public struct IconSummary: Equatable {
 
 public enum IconModel {
     /// Which glyph a session shows. A fresh finish blinks a green check for a few seconds.
-    public static func kind(state: SessionState, finishedUntil: Date?, tick: Int, now: Date) -> IconKind {
+    /// After a click the blink stops but the check stays steady until `lingerUntil`.
+    public static func kind(state: SessionState, finishedUntil: Date?, lingerUntil: Date? = nil,
+                            tick: Int, now: Date) -> IconKind {
         if state == .idle, let until = finishedUntil, until > now {
             return tick % 2 == 0 ? .finishedFilled : .finishedOutline
         }
+        if state == .idle, let until = lingerUntil, until > now { return .finishedFilled }
         switch state {
         case .stuck: return .stuck
         case .waiting: return .waiting
@@ -67,10 +82,12 @@ public enum IconModel {
     }
 
     /// Single-icon mode: the worst state wins; the badge counts sessions in that state (nil when just one).
-    public static func summary(states: [SessionState], finishedUntil: Date?, tick: Int, now: Date) -> IconSummary? {
+    public static func summary(states: [SessionState], finishedUntil: Date?, lingerUntil: Date? = nil,
+                               tick: Int, now: Date) -> IconSummary? {
         guard let worst = states.max() else { return nil }
         let n = states.filter { $0 == worst }.count
-        return IconSummary(kind: kind(state: worst, finishedUntil: finishedUntil, tick: tick, now: now),
+        return IconSummary(kind: kind(state: worst, finishedUntil: finishedUntil, lingerUntil: lingerUntil,
+                                      tick: tick, now: now),
                            badge: worst != .idle && n > 1 ? n : nil)
     }
 

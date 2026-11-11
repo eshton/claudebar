@@ -198,15 +198,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func deliver(_ alerts: [(session: Session, alert: Alert)]) {
         guard !selfTest else { return }
-        var sound = false
+        var sound: (name: String, volume: Float)?
         var haptic: String?
         for (s, a) in alerts {
             let d = AlertPolicy.delivery(for: a, settings: settings)
-            sound = sound || d.sound
+            // one sound per refresh; attention (errors, "needs you") outranks the finish bell
+            if let name = d.sound, sound == nil || a != .finished { sound = (name, d.volume) }
             if let h = d.haptic, haptic == nil || h == "angry_alert" { haptic = h }   // stuck outranks finished
             if d.banner { banner(for: s, a) }
         }
-        if sound { NSSound(named: "Ping")?.play() }
+        if let sound { Sounds.play(sound.name, volume: sound.volume) }
         if let haptic { Haptics.fire(haptic) }
     }
 
@@ -229,7 +230,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             notifier.post(id: "perm-\(r.id)", title: text.title, body: text.body, sessionId: r.sessionId, permissionId: r.id)
         }
         if !diff.gone.isEmpty { notifier.withdraw(ids: diff.gone.map { "perm-\($0)" }) }
-        if sound && !selfTest { NSSound(named: "Ping")?.play() }
+        if sound && !selfTest { Sounds.play(AlertPolicy.attentionSound) }
     }
 
     func resolve(_ id: String, _ verdict: PermissionVerdict) {
@@ -324,7 +325,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let now = Date()
         for (pid, it) in items {
             guard let s = sessions[pid] else { continue }
-            let kind = IconModel.kind(state: s.state, finishedUntil: tracker.finishedUntil[pid], tick: animTick, now: now)
+            let kind = IconModel.kind(state: s.state, finishedUntil: tracker.finishedUntil[pid],
+                                      lingerUntil: tracker.lingerUntil[pid], tick: animTick, now: now)
             it.button?.image = renderer.icon(kind, angle: spinAngle(), contextFraction: usage.perSession[s.sessionId]?.contextFraction,
                                              muted: settings.isMuted(s.sessionId))
         }
@@ -335,6 +337,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard let one = singleItem,
               let sum = IconModel.summary(states: visibleSessions.map(\.state),
                                           finishedUntil: tracker.latestFinish(of: visibleSessions.map(\.pid)),
+                                          lingerUntil: tracker.latestLinger(of: visibleSessions.map(\.pid)),
                                           tick: animTick, now: now) else { return }
         let fraction = visibleSessions.compactMap { usage.perSession[$0.sessionId]?.contextFraction }.max()
         let allMuted = !visibleSessions.isEmpty && visibleSessions.allSatisfy { settings.isMuted($0.sessionId) }
@@ -415,7 +418,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func clicked(_ sender: NSStatusBarButton) {
         let pid = Int32(sender.tag)
         guard let s = sessions[pid], let it = items[pid] else { return }
-        tracker.acknowledge(pid)
+        tracker.acknowledge(pid, lingerSeconds: settings.finishLingerSeconds)
         if wantsMenu() {
             it.menu = menu(for: s)
             it.button?.performClick(nil)   // shows the menu
@@ -428,7 +431,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func singleClicked(_ sender: NSStatusBarButton) {
         guard let it = singleItem else { return }
-        visibleSessions.forEach { tracker.acknowledge($0.pid) }
+        visibleSessions.forEach { tracker.acknowledge($0.pid, lingerSeconds: settings.finishLingerSeconds) }
         if !wantsMenu(), visibleSessions.count == 1, let only = visibleSessions.first {
             focus(only)
         } else {

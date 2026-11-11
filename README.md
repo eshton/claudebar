@@ -13,7 +13,7 @@ without leaving what you are doing.
   | green spinner (rotating) | running |
   | grey pause | idle |
   | red triangle | stuck: busy but silent for longer than the threshold (10 min) |
-  | blinking green check | just finished (15 s) |
+  | blinking green check | just finished (15 s); after you click it, a steady check stays for 2 more minutes |
   | thin bar beside the icon | context window usage: green < 60 %, orange < 85 %, red beyond |
 - **Click to focus** the session's [Ghostty](https://ghostty.org) tab, matched exactly by terminal tty (two sessions in
   the same folder with the same title are fine). Older Ghostty versions fall back to title, folder and tab glyph.
@@ -23,6 +23,7 @@ without leaving what you are doing.
   running or nobody answers within 5 minutes, Claude falls back to its normal terminal prompt.
 - **Token usage today** (bolt icon): input / output / cache breakdown, per session, with context percentage.
 - **Mute a session** (right-click) and **hide idle sessions** for a quieter menu bar.
+- **Sounds**: Ping when a session needs you or gets stuck, a soft bell when a job finishes.
 - **Haptics** on an MX Master 4 through the [HapticWeb](https://github.com/Fallstop/HapticWebPlugin) Logi plugin
   (optional): a buzz on finish, a stronger one on stuck.
 
@@ -57,9 +58,11 @@ Open from any menu (⌘,). Stored in `~/.claude/clauderr/settings.json`.
 | Spin the icon while running | on | also off when macOS "Reduce motion" is on |
 | Stuck after N minutes | 10 | |
 | Blink the green check for N s | 15 | |
+| Keep the green check N s after a click | 120 | 0 drops it at once; hidden-idle sessions stay visible meanwhile |
 | Hide idle sessions | off | they return when finishing or needing approval |
 | Notifications / also on finish | on / off | |
-| Sound / Haptics | on / on | |
+| Sound / Haptics | on / on | Sound is the master switch |
+| Sound when a job finishes | Glass | soft bell at half volume; None, Glass, Tink, Pop, Purr. Errors keep the louder Ping |
 | Approve / deny from the menu bar | on | installs the `PermissionRequest` hook |
 
 ## Troubleshooting
