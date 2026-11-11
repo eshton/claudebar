@@ -42,7 +42,7 @@ brew install --cask eshton/tap/claudebar
 open -a ClaudeBar
 ```
 
-Then choose **Install hooks** in ClaudeBar's Settings (or run
+Then click **Install / repair** under Hooks in ClaudeBar's Settings (or run
 `/Applications/ClaudeBar.app/Contents/MacOS/ClaudeBar --install-hooks`) and restart running Claude sessions.
 To start at login, add ClaudeBar in System Settings > General > Login Items. Update with `brew upgrade --cask claudebar`.
 
