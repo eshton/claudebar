@@ -46,6 +46,9 @@ extension AppDelegate: NSMenuDelegate {
     }
 
     func addFooter(to menu: NSMenu) {
+        let about = NSMenuItem(title: "ClaudeBar \(AppInfo.version)", action: nil, keyEquivalent: "")
+        about.isEnabled = false
+        menu.addItem(about)
         let prefs = NSMenuItem(title: "Settings…", action: #selector(openSettings), keyEquivalent: ",")
         prefs.target = self
         menu.addItem(prefs)

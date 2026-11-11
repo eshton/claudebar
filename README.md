@@ -47,6 +47,18 @@ Restart running Claude sessions after installing the hooks; they read hooks at s
 original `~/.claude/settings.json` once as `settings.json.bak-clauderr`.
 
 Launching a newer copy replaces an older running one. Running `open ClaudeBar.app` again always opens Settings.
+The installed version is shown at the bottom of every menu (`ClaudeBar 0.3.0`) and by `ClaudeBar --version`.
+
+To update: `git pull && make app`, then quit ClaudeBar and `open ClaudeBar.app`.
+
+## Uninstall
+
+```sh
+make uninstall                 # quit, unregister hooks (others kept), remove login item and installed scripts
+scripts/uninstall.sh --purge   # also delete settings and state in ~/.claude/clauderr
+```
+
+Then restart running Claude sessions and delete this folder.
 
 ## Settings
 
@@ -90,10 +102,12 @@ ClaudeBar --selftest        (needs CLAUDEBAR_HOME)               print the menu 
 ## Development
 
 ```sh
+make setup        # once: checks tools, installs the pre-commit hook (lint + unit tests)
 make help         # all targets
-make check        # lint + unit tests with coverage gate + hook tests + smoke test
+make check        # lint + unit tests with coverage gate + script tests + smoke test
 make test         # unit tests only
 make smoke        # launches the real binary against a fake home; briefly creates menu bar items
+make release VERSION=0.4.0   # see docs/RELEASING.md
 ```
 
 | Layer | Where | Tested by |
@@ -101,6 +115,11 @@ make smoke        # launches the real binary against a fake home; briefly create
 | Decisions: states, alerts, text, tab matching, hook installer, token counting | `Sources/ClaudeBarCore` | unit tests, 94 % line coverage (gate: 90 %) |
 | AppKit: status items, menus, notifications, settings window | `Sources/ClaudeBar` | `Tests/smoke.sh` against a fake home |
 | Hook scripts | `hooks/` | `Tests/hooks.sh` |
+| Release and uninstall scripts | `scripts/` | `Tests/release.sh`, `Tests/uninstall.sh` (throwaway repos and homes) |
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for how the pieces fit and [CONTRIBUTING.md](CONTRIBUTING.md) before
 sending a change.
+
+## License
+
+[MIT](LICENSE)

@@ -28,7 +28,7 @@ if !selfTest, let cmd = CommandLine.arguments.dropFirst().first, cmd.hasPrefix("
                 print("\(s.name) [\(s.state)] pid \(s.pid) tty \(ProcessTTY.of(s.pid) ?? "-") -> \(target)")
             }
         case "--version":
-            print(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "dev")
+            print(AppInfo.version)
         case "--hooks-status":
             print(installer.status())
         default:

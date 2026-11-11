@@ -1,0 +1,14 @@
+#!/bin/bash
+# Git pre-commit hook, installed by `make setup`. Fast checks only (lint + unit tests, ~10 s);
+# `make check` adds coverage, script tests and the smoke test. Skip once with `git commit --no-verify`.
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+swiftlint lint --quiet --strict
+LOG=$(mktemp)
+if ! swift test >"$LOG" 2>&1; then
+  grep -E "error|failed" "$LOG" | head -30
+  rm -f "$LOG"
+  echo "pre-commit: unit tests failed" >&2
+  exit 1
+fi
+rm -f "$LOG"

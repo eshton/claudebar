@@ -3,6 +3,10 @@
 ## Unreleased
 
 ### Added
+- **MIT license.**
+- **Uninstall**: `make uninstall` removes hooks (keeping your others), the login item and installed scripts;
+  `--purge` also deletes settings.
+- **Version at the bottom of every menu**; release process (`make release VERSION=X.Y.Z`, `docs/RELEASING.md`).
 - **Click a session in the bolt menu to jump to its Ghostty tab** (same as clicking its icon, state glyph per row).
 - **Soft bell when a job finishes** (system sound `Glass` at half volume; choose None / Glass / Tink / Pop / Purr in
   Settings). Errors and "needs you" keep the louder `Ping`, which also wins when both happen at once.
@@ -10,12 +14,14 @@
   "hide idle sessions" is on). Adjustable, 0 = drop at once.
 
 ### Fixed
+- Installing hooks from a binary that could not find the hook scripts registered hooks pointing at missing files
+  without any error; it now refuses. (`.build/debug` is a symlink, so the repo was not found from a debug build.)
 - Clicking a session could still open the wrong Ghostty tab when two idle sessions had the same folder, title and
   glyph. Tabs are now matched exactly by terminal tty (and foreground pid); title/folder/glyph matching is only a
   fallback for Ghostty versions without tty support, and a session running outside Ghostty no longer lands on a
   look-alike tab.
 
-## 0.2.0
+## 0.2.0 - 2026-11-10
 
 ### Added
 - **Single combined icon** (default): worst state wins, badge counts sessions in it; click focuses or lists sessions.
@@ -42,7 +48,7 @@
 - The bolt shows only the icon by default (token count is a setting) to save menu bar space.
 - `AppDelegate` split into core logic (`SessionText`, `SessionTracker`, ...), `IconRenderer` and menus.
 
-## 0.1.0
+## 0.1.0 - 2026-11-05
 
 Initial version: one icon per session (waiting / running / idle / stuck / finished), click to focus a Ghostty tab,
 today's token usage with context percentage, MX Master haptics, start at login.

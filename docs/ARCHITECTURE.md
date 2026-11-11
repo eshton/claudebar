@@ -98,8 +98,9 @@ controlling tty (`ps -o tty= -p <pid>`). `GhosttyMatcher.pickMatch` (tests in `G
 | Unit | `make test` | decisions in `ClaudeBarCore`; real files in temp directories |
 | Coverage gate | `make coverage` | core stays at or above 90 % line coverage |
 | Hook scripts | `make hooks-test` | `mark.sh` / `permission.sh` end to end, with a `pgrep` shim |
+| Release, uninstall | `make scripts-test` | release bumps/dates/tags and refuses bad input; uninstall removes only ClaudeBar's parts |
 | Smoke | `make smoke` | the real binary, against fake sessions, puts the right items in the menu bar |
-| CI | `.github/workflows/ci.yml` | lint, build, unit + coverage, hooks, bundle, installer dry run |
+| CI | `.github/workflows/ci.yml` | lint, build, unit + coverage, script tests, bundle, installer dry run |
 
 The smoke test needs a logged-in GUI session (it creates real status items), so CI does not run it.
 

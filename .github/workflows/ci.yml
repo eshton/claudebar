@@ -16,8 +16,8 @@ jobs:
         run: swift build
       - name: Unit tests + coverage gate
         run: scripts/coverage.sh
-      - name: Hook script tests
-        run: Tests/hooks.sh
+      - name: Script tests (hooks, release, uninstall)
+        run: make scripts-test
       - name: Release app bundle
         run: scripts/build.sh
       - name: Installer dry run (isolated home)

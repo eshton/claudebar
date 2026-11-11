@@ -1,10 +1,11 @@
 #!/bin/bash
-# Start ClaudeBar at login via a LaunchAgent. Undo: ./install-login.sh remove
+# Start ClaudeBar at login via a LaunchAgent. Undo: scripts/install-login.sh remove
+# LAUNCHCTL overrides the launchctl binary (tests set it to `true` so the real launchd is never touched).
 set -euo pipefail
 PLIST="$HOME/Library/LaunchAgents/local.clauderr.ClaudeBar.plist"
 APP="$(cd "$(dirname "$0")/.." && pwd)/ClaudeBar.app"
 if [ "${1:-}" = "remove" ]; then
-  launchctl bootout "gui/$(id -u)" "$PLIST" 2>/dev/null || true
+  "${LAUNCHCTL:-launchctl}" bootout "gui/$(id -u)" "$PLIST" 2>/dev/null || true
   rm -f "$PLIST"; echo "removed"; exit 0
 fi
 mkdir -p "$(dirname "$PLIST")"

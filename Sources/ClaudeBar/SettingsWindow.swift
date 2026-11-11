@@ -10,7 +10,7 @@ enum HookSource {
         let fm = FileManager.default
         var candidates: [URL] = []
         if let r = Bundle.main.resourceURL { candidates.append(r.appendingPathComponent("hooks")) }
-        if let exe = Bundle.main.executableURL {   // .build/<config>/ClaudeBar  ->  repo root
+        if let exe = Bundle.main.executableURL?.resolvingSymlinksInPath() {   // .build/<triple>/<config>/ClaudeBar -> repo
             candidates.append(exe.deletingLastPathComponent().deletingLastPathComponent()
                 .deletingLastPathComponent().deletingLastPathComponent().appendingPathComponent("hooks"))
         }

@@ -4,11 +4,14 @@
 
 ```sh
 brew install swiftlint     # the only tool beyond the Swift toolchain
-make check                 # must pass before every commit
+make setup                 # installs the pre-commit hook: lint + unit tests on every commit
+make check                 # everything; must pass before a release
 ```
 
-`make check` = strict SwiftLint, unit tests with the coverage gate, hook script tests, and the smoke test. The smoke
-test briefly creates real menu bar items, so run it in a logged-in session.
+`make check` = strict SwiftLint, unit tests with the coverage gate, script tests (hooks, release, uninstall), and the
+smoke test. The smoke test briefly creates real menu bar items, so run it in a logged-in session.
+
+Add a line under `## Unreleased` in `CHANGELOG.md` for anything a user would notice. Releases: `docs/RELEASING.md`.
 
 ## Where does my change go?
 
@@ -39,3 +42,5 @@ tests in `AlertAndIconTests` and `SessionTextTests`.
 ## Commits
 
 Short imperative subject, a body that says why. One logical change per commit; keep `make check` green at each one.
+
+By contributing you agree that your contribution is licensed under the project's [MIT license](LICENSE).

@@ -109,4 +109,19 @@ final class HookInstallerTests: XCTestCase {
         XCTAssertEqual(without.status(), .installed)
         XCTAssertTrue(commands(try json(home), "PermissionRequest").isEmpty)
     }
+
+    func testNoSourceAndNothingInstalledRefusesToRegisterBrokenHooks() throws {
+        let home = try tempHome()
+        let inst = HookInstaller(home: home, sourceDir: nil, permissionHook: true)
+        XCTAssertThrowsError(try inst.install())
+        XCTAssertFalse(FileManager.default.fileExists(atPath: home.appendingPathComponent(".claude/settings.json").path))
+    }
+
+    func testNoSourceButScriptsAlreadyInstalledIsFine() throws {
+        let (first, home) = try make()
+        try first.install()                                         // copies the scripts
+        let again = HookInstaller(home: home, sourceDir: nil, permissionHook: true)
+        XCTAssertNoThrow(try again.install())
+        XCTAssertEqual(again.status(), .installed)
+    }
 }

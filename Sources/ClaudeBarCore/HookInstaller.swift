@@ -101,9 +101,17 @@ public struct HookInstaller {
 
     // MARK: internals
 
+    /// Copies the scripts into `installDir`. Without a source, the scripts must already be installed there:
+    /// registering hooks that point at missing files would break every Claude session's hooks silently.
     func copyScripts() throws {
-        guard let src = sourceDir else { return }
         let fm = FileManager.default
+        guard let src = sourceDir else {
+            for name in ["mark.sh", "permission.sh"] {
+                let path = installDir.appendingPathComponent(name).path
+                guard fm.isExecutableFile(atPath: path) else { throw InstallError.missingScript(path) }
+            }
+            return
+        }
         try fm.createDirectory(at: installDir, withIntermediateDirectories: true)
         for name in ["mark.sh", "permission.sh"] {
             let from = src.appendingPathComponent(name)
