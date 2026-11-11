@@ -4,6 +4,11 @@ A macOS menu bar monitor for [Claude Code](https://claude.com/claude-code) sessi
 running, waiting for you, stuck or finished, jump to the right terminal tab, and approve permission prompts
 without leaving what you are doing.
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/menu-dark.png">
+  <img src="docs/images/menu-light.png" alt="ClaudeBar menu: sessions with their state, one session's details" width="820">
+</picture>
+
 ## Features
 
 - **One icon for all sessions** (or one per session). The worst state wins and a badge counts sessions in it.
@@ -27,6 +32,22 @@ without leaving what you are doing.
 - **Sounds**: Ping when a session needs you or gets stuck, a soft bell when a job finishes.
 - **Haptics** on an MX Master 4 through the [HapticWeb](https://github.com/Fallstop/HapticWebPlugin) Logi plugin
   (optional): a buzz on finish, a stronger one on stuck.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/icons-dark.png">
+  <img src="docs/images/icons-light.png" alt="One icon per session: stuck, waiting, running, finished, idle, each with a context gauge; bolt for tokens" width="620">
+</picture>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/tokens-dark.png">
+  <img src="docs/images/tokens-light.png" alt="Bolt menu: today's token breakdown and every session's usage" width="560">
+</picture>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/notifications-dark.png">
+  <img src="docs/images/notifications-light.png" alt="Notifications: approve a Bash command, a stuck session with its diagnosis" width="440">
+</picture>
+
+<sub>Images are mockups with made-up sessions (`make readme-images`).</sub>
 
 ## Requirements
 
