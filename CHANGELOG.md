@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Added
+- **Click a session in the bolt menu to jump to its Ghostty tab** (same as clicking its icon, state glyph per row).
 - **Soft bell when a job finishes** (system sound `Glass` at half volume; choose None / Glass / Tink / Pop / Purr in
   Settings). Errors and "needs you" keep the louder `Ping`, which also wins when both happen at once.
 - **A clicked finished session stays for 2 minutes**: the blink stops and a steady green check remains (also when

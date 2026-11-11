@@ -160,6 +160,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         var d: [String: Any] = ["singleIcon": settings.singleIcon, "sessionItems": sessionItems,
                                 "placeholder": placeholder != nil, "pending": pending.count, "animating": animTimer != nil]
         if let t = tokenItem { d["token"] = entry(t) }
+        if let m = tokenItem?.menu {
+            menuNeedsUpdate(m)
+            d["tokenMenu"] = m.items.map { ["title": $0.title, "clickable": $0.action != nil] as [String: Any] }
+        }
         let data = try? JSONSerialization.data(withJSONObject: d, options: [.sortedKeys])
         return data.flatMap { String(data: $0, encoding: .utf8) } ?? "{}"
     }

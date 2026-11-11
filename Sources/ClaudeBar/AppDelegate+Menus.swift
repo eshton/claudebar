@@ -32,8 +32,14 @@ extension AppDelegate: NSMenuDelegate {
         let byUsage = sessions.values.sorted {
             (usage.perSession[$0.sessionId]?.today.total ?? 0) > (usage.perSession[$1.sessionId]?.today.total ?? 0)
         }
-        for s in byUsage {
-            menu.addItem(withTitle: SessionText.tokenRow(s, usage: usage.perSession[s.sessionId]), action: nil, keyEquivalent: "")
+        for s in byUsage {   // click a row to jump to that session's tab
+            let row = actionItem(SessionText.tokenRow(s, usage: usage.perSession[s.sessionId]),
+                                 #selector(menuFocus(_:)), object: NSNumber(value: s.pid))
+            if let img = renderer.glyph(IconModel.kind(state: s.state, finishedUntil: nil, tick: 0, now: Date())) {
+                img.size = NSSize(width: 15, height: 15)
+                row.image = img
+            }
+            menu.addItem(row)
         }
         menu.addItem(.separator())
         addFooter(to: menu)
@@ -126,8 +132,12 @@ extension AppDelegate: NSMenuDelegate {
         updateIcons()
     }
 
+    /// Same as clicking the session's icon: acknowledges a finished job, then jumps to its tab.
     @objc private func menuFocus(_ sender: NSMenuItem) {
-        if let n = sender.representedObject as? NSNumber, let s = sessions[n.int32Value] { focus(s) }
+        guard let n = sender.representedObject as? NSNumber, let s = sessions[n.int32Value] else { return }
+        tracker.acknowledge(s.pid, lingerSeconds: settings.finishLingerSeconds)
+        focus(s)
+        updateIcons()
     }
 
     @objc private func openCwd(_ sender: NSMenuItem) {

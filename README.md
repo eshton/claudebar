@@ -21,7 +21,8 @@ without leaving what you are doing.
   *"tool still running 14m: Bash `npm test`"* or *"last tool finished 10m ago; model silent since"*.
 - **Approve / Deny permission prompts** from a banner button, the icon's menu or the bolt menu. If ClaudeBar is not
   running or nobody answers within 5 minutes, Claude falls back to its normal terminal prompt.
-- **Token usage today** (bolt icon): input / output / cache breakdown, per session, with context percentage.
+- **Token usage today** (bolt icon): input / output / cache breakdown, then every session with its context percentage;
+  click a session in that list to jump to its tab.
 - **Mute a session** (right-click) and **hide idle sessions** for a quieter menu bar.
 - **Sounds**: Ping when a session needs you or gets stuck, a soft bell when a job finishes.
 - **Haptics** on an MX Master 4 through the [HapticWeb](https://github.com/Fallstop/HapticWebPlugin) Logi plugin

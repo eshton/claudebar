@@ -60,6 +60,10 @@ check "idle only -> no animation timer" 'd["animating"] is False'
 reset "{$BASE,\"hideIdle\":true}"; session $P1 s1 alpha idle; session $P2 s2 beta idle
 check "hide idle: all idle -> placeholder" 'd["placeholder"] and len(d["sessionItems"])==0'
 
+reset "{$BASE,\"singleIcon\":true}"; session $P1 s1 alpha busy; session $P2 s2 beta idle
+check "bolt menu lists every session as a clickable row" 'all(any(i["title"].startswith(n) and i["clickable"] for i in d["tokenMenu"]) for n in ("alpha","beta"))'
+check "bolt menu: token totals are not clickable" 'not any(i["title"].startswith("Today:") and i["clickable"] for i in d["tokenMenu"])'
+
 reset "{$BASE,\"showTokenText\":false}"; session $P1 s1 alpha busy
 check "bolt is icon-only by default" 'd["token"]["hasImage"] and d["token"]["title"]==""'
 
