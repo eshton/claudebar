@@ -10,8 +10,9 @@ func tempHome() throws -> URL {
 }
 
 func makeSession(pid: Int32 = 1, id: String = "s1", name: String = "alpha", cwd: String = "/p",
-                 state: SessionState = .running, silentFor: TimeInterval = 0) -> Session {
-    Session(pid: pid, sessionId: id, name: name, cwd: cwd, state: state, silentFor: silentFor)
+                 state: SessionState = .running, silentFor: TimeInterval = 0,
+                 sinceMessage: TimeInterval? = nil) -> Session {
+    Session(pid: pid, sessionId: id, name: name, cwd: cwd, state: state, silentFor: silentFor, sinceMessage: sinceMessage)
 }
 
 func makeUsage(today: Int = 12_300_000, context: Int = 340_000, last: String? = nil) -> SessionUsage {
