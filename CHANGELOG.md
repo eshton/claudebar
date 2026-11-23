@@ -6,6 +6,11 @@
 - **Homebrew**: `brew install --cask eshton/tap/claudebar` installs a prebuilt universal (Apple silicon + Intel)
   ClaudeBar.app. `make dist` builds the release zip and its sha256.
 
+### Fixed
+- **No "needs you" banner for the previous turn when you send a prompt**: Claude Code's idle notification left a
+  waiting marker on finished sessions, and sending the next prompt briefly showed it as "waiting". A marker now only
+  counts when written after the session's last status change.
+
 ## 0.3.0 - 2026-11-11
 
 ### Added

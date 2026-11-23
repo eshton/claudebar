@@ -29,6 +29,34 @@ final class SessionStoreTests: XCTestCase {
         XCTAssertEqual(SessionStore.aggregate(s), .waiting)
     }
 
+    func testMarkerOlderThanStatusChangeIsIgnored() throws {
+        let home = try tempHome()
+        let sd = home.appendingPathComponent(".claude/sessions")
+        let md = home.appendingPathComponent(".claude/clauderr")
+        try FileManager.default.createDirectory(at: sd, withIntermediateDirectories: true)
+        let now = Date()
+        func session(_ pid: Int, _ id: String, statusAt: Date) throws {
+            let ms = Int(statusAt.timeIntervalSince1970 * 1000)
+            try #"{"pid":\#(pid),"sessionId":"\#(id)","cwd":"/x","name":"\#(id)","status":"busy","statusUpdatedAt":\#(ms)}"#
+                .write(to: sd.appendingPathComponent("\(pid).json"), atomically: true, encoding: .utf8)
+        }
+        func marker(_ id: String, at: Date) throws {
+            let p = md.appendingPathComponent("\(id).waiting").path
+            FileManager.default.createFile(atPath: p, contents: nil)
+            try FileManager.default.setAttributes([.modificationDate: at], ofItemAtPath: p)
+        }
+        // idle Notification left a marker, then the user sent a prompt (busy) before UserPromptSubmit cleared it
+        try session(1, "stale", statusAt: now.addingTimeInterval(-1))
+        try marker("stale", at: now.addingTimeInterval(-60))
+        // a permission prompt mid-turn: marker written after the turn started
+        try session(2, "fresh", statusAt: now.addingTimeInterval(-30))
+        try marker("fresh", at: now.addingTimeInterval(-5))
+        let byId = Dictionary(uniqueKeysWithValues: SessionStore(home: home, isAlive: { _ in true }).load(now: now)
+            .map { ($0.sessionId, $0.state) })
+        XCTAssertEqual(byId["stale"], .running)
+        XCTAssertEqual(byId["fresh"], .waiting)
+    }
+
     func testStuckWhenSilent() throws {
         let home = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         let sd = home.appendingPathComponent(".claude/sessions")

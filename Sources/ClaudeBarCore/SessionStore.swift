@@ -29,10 +29,9 @@ public struct SessionStore {
             guard let data = try? Data(contentsOf: f),
                   let raw = try? dec.decode(RawSession.self, from: data),
                   isAlive(raw.pid) else { continue }
-            let marker = markerDir.appendingPathComponent("\(raw.sessionId).waiting").path
             var state = SessionState.derive(
                 status: raw.status ?? "idle",
-                hasWaitingMarker: fm.fileExists(atPath: marker))
+                hasWaitingMarker: hasFreshMarker(raw))
             let last = lastActivity(raw)
             let silent = max(0, now.timeIntervalSince(last))
             if state == .running && silent > staleAfter { state = .stuck }
@@ -42,6 +41,17 @@ public struct SessionStore {
         }
         // waiting first, then running, then idle; stable by name
         return out.sorted { ($0.state, $1.name) > ($1.state, $0.name) }
+    }
+
+    /// A waiting marker only counts when written after the last status change. Claude Code fires its idle
+    /// Notification ~60 s after a turn ends, leaving a marker on the idle session; when the user then sends a prompt
+    /// the status flips to busy before UserPromptSubmit clears the marker, which would announce the old stop as
+    /// "needs you".
+    func hasFreshMarker(_ raw: RawSession) -> Bool {
+        let path = markerDir.appendingPathComponent("\(raw.sessionId).waiting").path
+        guard let attrs = try? FileManager.default.attributesOfItem(atPath: path) else { return false }
+        guard let changed = raw.statusUpdatedAt, let written = attrs[.modificationDate] as? Date else { return true }
+        return written.timeIntervalSince1970 * 1000 >= changed
     }
 
     /// Newest of: status change time, session transcript mtime, subagent transcript mtimes.
