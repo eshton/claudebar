@@ -6,6 +6,12 @@
 - **Homebrew**: `brew install --cask eshton/tap/claudebar` installs a prebuilt universal (Apple silicon + Intel)
   ClaudeBar.app. `make dist` builds the release zip and its sha256.
 
+### Changed
+- **Session list ordered by last message**: the single icon's menu and tooltip list the most recently active session
+  first, and each row shows the time since its last message (`name — running · 3m ago`, `2d3h ago`; the two largest units). The bolt menu's
+  session rows use the same order and show the time too (previously sorted by today's tokens). The time comes from the
+  last user / assistant entry in the transcript, not the file's mtime (Claude Code rewrites old transcripts on startup).
+
 ## 0.3.0 - 2026-11-11
 
 ### Added

@@ -7,6 +7,7 @@ public struct SessionStore {
     /// A busy/shell session with no activity for this long is "stuck".
     public var staleAfter: TimeInterval
     public var isAlive: (Int32) -> Bool
+    private let messageTimes = MessageTimeCache()
 
     public init(
         home: URL = AppHome.url,
@@ -36,9 +37,10 @@ public struct SessionStore {
             let last = lastActivity(raw)
             let silent = max(0, now.timeIntervalSince(last))
             if state == .running && silent > staleAfter { state = .stuck }
+            let since = lastMessage(raw).map { max(0, now.timeIntervalSince($0)) }
             out.append(Session(pid: raw.pid, sessionId: raw.sessionId,
                                name: raw.name ?? raw.sessionId, cwd: raw.cwd ?? "",
-                               state: state, silentFor: silent))
+                               state: state, silentFor: silent, sinceMessage: since))
         }
         // waiting first, then running, then idle; stable by name
         return out.sorted { ($0.state, $1.name) > ($1.state, $0.name) }
@@ -56,6 +58,29 @@ public struct SessionStore {
         let subs = project.appendingPathComponent("\(raw.sessionId)/subagents")
         for f in (try? fm.contentsOfDirectory(at: subs, includingPropertiesForKeys: nil)) ?? [] { bump(f) }
         return newest
+    }
+
+    /// Time of the last user / assistant message, read from the transcript tail.
+    /// Cached per transcript size + mtime, so the 2 s poll only re-reads files that changed.
+    func lastMessage(_ raw: RawSession) -> Date? {
+        guard let dir = projectDir(for: raw) else { return nil }
+        let url = dir.appendingPathComponent("\(raw.sessionId).jsonl")
+        guard let attrs = try? FileManager.default.attributesOfItem(atPath: url.path),
+              let size = (attrs[.size] as? NSNumber)?.uint64Value,
+              let mtime = attrs[.modificationDate] as? Date else { return nil }
+        let key = MessageTimeCache.Key(size: size, mtime: mtime)
+        if let hit = messageTimes.get(url.path, key) { return hit }
+        var found: Date?
+        for window: UInt64 in [256_000, 4_000_000] {
+            guard let h = try? FileHandle(forReadingFrom: url) else { break }
+            try? h.seek(toOffset: size > window ? size - window : 0)
+            let data = (try? h.readToEnd()) ?? Data()
+            try? h.close()
+            found = TranscriptScan.lastMessageTime(inTail: data)
+            if found != nil || size <= window { break }
+        }
+        messageTimes.set(url.path, key, found)
+        return found
     }
 
     /// ~/.claude/projects/<cwd with non-alphanumerics -> '-'>; falls back to scanning for the session file.

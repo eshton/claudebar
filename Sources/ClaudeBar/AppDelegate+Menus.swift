@@ -29,10 +29,7 @@ extension AppDelegate: NSMenuDelegate {
         menu.addItem(withTitle: lines[0], action: nil, keyEquivalent: "")
         lines.dropFirst().forEach { menu.addItem(withTitle: $0, action: nil, keyEquivalent: "") }
         menu.addItem(.separator())
-        let byUsage = sessions.values.sorted {
-            (usage.perSession[$0.sessionId]?.today.total ?? 0) > (usage.perSession[$1.sessionId]?.today.total ?? 0)
-        }
-        for s in byUsage {   // click a row to jump to that session's tab
+        for s in SessionText.listOrder(Array(sessions.values)) {   // click a row to jump to that session's tab
             let row = actionItem(SessionText.tokenRow(s, usage: usage.perSession[s.sessionId]),
                                  #selector(menuFocus(_:)), object: NSNumber(value: s.pid))
             if let img = renderer.glyph(IconModel.kind(state: s.state, finishedUntil: nil, tick: 0, now: Date())) {

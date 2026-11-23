@@ -44,16 +44,45 @@ final class SessionTextTests: XCTestCase {
         XCTAssertEqual(t, "alpha — idle\n/p\n(click: focus in Ghostty · right-click: menu)")   // diagnosis only for stuck
     }
 
-    func testListOrderWorstFirstThenName() {
-        let list = [makeSession(pid: 1, name: "b", state: .idle), makeSession(pid: 2, name: "a", state: .waiting),
-                    makeSession(pid: 3, name: "c", state: .waiting), makeSession(pid: 4, name: "d", state: .stuck)]
-        XCTAssertEqual(SessionText.listOrder(list).map(\.name), ["d", "a", "c", "b"])
+    func testListOrderMostRecentFirstThenName() {
+        let list = [makeSession(pid: 1, name: "b", state: .stuck, silentFor: 900),
+                    makeSession(pid: 2, name: "c", state: .idle, silentFor: 70),
+                    makeSession(pid: 3, name: "a", state: .waiting, silentFor: 100),
+                    makeSession(pid: 4, name: "d", state: .running, silentFor: 5)]
+        XCTAssertEqual(SessionText.listOrder(list).map(\.name), ["d", "c", "a", "b"])
+    }
+
+    func testDuration() {
+        XCTAssertEqual(SessionText.duration(seconds: 0), "0s")
+        XCTAssertEqual(SessionText.duration(seconds: 42), "42s")
+        XCTAssertEqual(SessionText.duration(seconds: 182), "3m2s")
+        XCTAssertEqual(SessionText.duration(seconds: 3_600), "1h0m")
+        XCTAssertEqual(SessionText.duration(seconds: 11_100), "3h5m")
+        XCTAssertEqual(SessionText.duration(seconds: 184_332), "2d3h")
+        XCTAssertEqual(SessionText.duration(seconds: 519_960), "6d0h")
+    }
+
+    func testAgoPrefersMessageTime() {
+        // the transcript was touched recently (silentFor), but the last message is 2 days old
+        let s = makeSession(name: "n", state: .idle, silentFor: 30, sinceMessage: 2 * 86_400)
+        XCTAssertEqual(SessionText.rowTitle(s, hasApproval: false), "n — idle · 2d0h ago")
+        let fresh = makeSession(pid: 2, name: "m", state: .idle, silentFor: 9_000, sinceMessage: 60)
+        XCTAssertEqual(SessionText.listOrder([s, fresh]).map(\.name), ["m", "n"])
+    }
+
+    func testRowTitleShowsMinutesSinceLastMessage() {
+        XCTAssertEqual(SessionText.rowTitle(makeSession(state: .idle, silentFor: 185), hasApproval: false),
+                       "alpha — idle · 3m5s ago")
+        XCTAssertEqual(SessionText.rowTitle(makeSession(state: .waiting, silentFor: 20), hasApproval: true),
+                       "alpha — waiting · 20s ago · approval needed")
     }
 
     func testSingleTooltip() {
-        let list = [makeSession(pid: 1, id: "s1", name: "a", state: .running), makeSession(pid: 2, id: "s2", name: "b", state: .waiting)]
+        let list = [makeSession(pid: 1, id: "s1", name: "a", state: .running, silentFor: 240),
+                    makeSession(pid: 2, id: "s2", name: "b", state: .waiting, silentFor: 60)]
         let t = SessionText.singleTooltip(list, pending: [makeRequest(session: "s2")], mutedIds: ["s1"])
-        XCTAssertEqual(t, "• b — waiting · approval needed\n• a — running · muted\n(click: focus / list · right-click: list)")
+        XCTAssertEqual(t, "• b — waiting · 1m0s ago · approval needed\n• a — running · 4m0s ago · muted\n"
+                          + "(click: focus / list · right-click: list)")
     }
 
     func testMenuLines() {
@@ -73,8 +102,8 @@ final class SessionTextTests: XCTestCase {
         XCTAssertEqual(SessionText.tokenLines(t), ["Today: 4.50M tokens", "    Input: 1.00M", "    Output: 0.50M",
                                                    "    Cache write: 0.00M", "    Cache read: 3.00M"])
         XCTAssertEqual(SessionText.tokenRow(makeSession(), usage: makeUsage(today: 4_200_000, context: 68_000)),
-                       "alpha: 4.20M · ctx 34%")
-        XCTAssertEqual(SessionText.tokenRow(makeSession(), usage: nil), "alpha: 0.00M")
+                       "alpha: 4.20M · ctx 34% · 0s ago")
+        XCTAssertEqual(SessionText.tokenRow(makeSession(), usage: nil), "alpha: 0.00M · 0s ago")
     }
 
     func testBanners() {

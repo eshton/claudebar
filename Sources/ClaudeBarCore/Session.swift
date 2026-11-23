@@ -26,6 +26,9 @@ public struct Session: Equatable {
     public let state: SessionState
     /// Seconds since last sign of life (transcript, subagent transcripts, status change).
     public let silentFor: TimeInterval
+    /// Seconds since the last user or assistant message in the transcript; nil when none was found.
+    /// Unlike `silentFor` this ignores metadata Claude Code rewrites into old transcripts.
+    public let sinceMessage: TimeInterval?
 }
 
 struct RawSession: Decodable {

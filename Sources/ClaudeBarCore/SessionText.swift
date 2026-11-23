@@ -48,14 +48,28 @@ public enum SessionText {
         return t + "\n(click: focus in Ghostty · right-click: menu)"
     }
 
-    /// Worst state first, then by name.
+    /// Most recent activity (last message) first, then by name.
     public static func listOrder(_ sessions: [Session]) -> [Session] {
-        sessions.sorted { ($0.state, $1.name) > ($1.state, $0.name) }
+        sessions.sorted { (ago($0), $0.name) < (ago($1), $1.name) }
     }
 
-    /// "name — running · approval needed"
+    /// Whole seconds since the session's last message (last activity when the transcript has none).
+    static func ago(_ s: Session) -> Int { Int(s.sinceMessage ?? s.silentFor) }
+
+    /// The two largest units: "42s", "3m2s", "5h0m", "2d3h".
+    public static func duration(seconds: Int) -> String {
+        let units = [(86_400, "d"), (3_600, "h"), (60, "m"), (1, "s")]
+        let t = max(0, seconds)
+        guard let i = units.firstIndex(where: { t >= $0.0 }) else { return "0s" }
+        let (size, name) = units[i]
+        guard i + 1 < units.count else { return "\(t)\(name)" }
+        let (next, nextName) = units[i + 1]
+        return "\(t / size)\(name)\(t % size / next)\(nextName)"
+    }
+
+    /// "name — running · 3m ago · approval needed"
     public static func rowTitle(_ s: Session, hasApproval: Bool) -> String {
-        "\(s.name) — \(label(s.state))\(hasApproval ? " · approval needed" : "")"
+        "\(s.name) — \(label(s.state)) · \(duration(seconds: ago(s))) ago\(hasApproval ? " · approval needed" : "")"
     }
 
     /// Hover text of the single combined icon: one bullet per session.
@@ -88,10 +102,10 @@ public enum SessionText {
                 .map { "    \($0.0): \(Fmt.millions($0.1))" }
     }
 
-    /// "name: 4.20M · ctx 34%"
+    /// "name: 4.20M · ctx 34% · 3m ago"
     public static func tokenRow(_ s: Session, usage: SessionUsage?) -> String {
         let ctx = usage.map { " · ctx \(Int($0.contextFraction * 100))%" } ?? ""
-        return "\(s.name): \(Fmt.millions(usage?.today.total ?? 0))\(ctx)"
+        return "\(s.name): \(Fmt.millions(usage?.today.total ?? 0))\(ctx) · \(duration(seconds: ago(s))) ago"
     }
 
     public static func bannerText(_ alert: Alert, session s: Session, request: PermissionRequest?,
